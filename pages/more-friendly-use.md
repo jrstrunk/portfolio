@@ -116,7 +116,7 @@ Let's explore a couple of these points.
 
 `use-fn` is by far the most challenging concept to learn in Gleam. `use-case` retains the core benefits of `use-fn` for error handling, but is significantly easier to learn and use. Considering a world where both `use-case` and `use-fn` exist, `use-case` would be a valuable step to learn before learning `use-fn`. The learning path would be `case` -> patterns -> `use-case` -> `use-fn`, which is a much more gradual and natural path to follow. Currently, there is nothing to ease new users into `use-fn`.
 
-If `use-case` were widely used where `use-fn` is used today, it would lower Gleam's barrier to entry as a whole.
+If `use-case` were widely used where `use-fn` is used today for error handling, it would lower Gleam's barrier to entry as a whole.
 
 ## Ease of Debugging
 
