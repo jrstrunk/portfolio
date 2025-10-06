@@ -218,7 +218,9 @@ use error <- result.try_recover(my_result_func(input_val))
 `use-case` example:
 ```gleam
 // if you know `use-case`, you know this!
-use Error(err) <- case my_result_func(input_val) { ok -> ok }
+use Error(err) <- case my_result_func(input_val) {
+  Ok(ok) -> Ok(ok)
+}
 ```
 
 ## Result Handling - Returning an Unwrapped Value
@@ -240,15 +242,6 @@ use Ok(page_path) <- case get_page_route_from_model(model) {
   _ -> #(model, effect.none())
 }
 ```
-```gleam
-// or easily add a block to be lazily executed
-use Ok(page_path) <- case get_page_route_from_model(model) {
-  _ -> {
-    io.println("no page path found")
-    #(model, effect.none())
-  }
-}
-```
 
 ## Boolean Guard
 `use-fn` example:
@@ -266,9 +259,15 @@ use <- bool.lazy_guard(
 
 let is_low = my_val < 45
 
-use <- bool.guard(when: is_low, return: Error("Low"))
+use <- bool.guard(
+  when: is_low,
+  return: Error("My value is too low")
+)
 
-use <- bool.guard(when: !is_low, return: Error("High"))
+use <- bool.guard(
+  when: !is_low,
+  return: Error("My value is too high")
+)
 ```
 
 `use-case` example:
@@ -283,9 +282,13 @@ use True <- case my_val < 45 {
 
 let is_low = my_val < 45
 
-use True <- case is_low { False -> Error("Low") }
+use True <- case is_low {
+  False ->  Error("My value is too low")
+}
 
-use False <- case is_low { True -> Error("High") }
+use False <- case is_low {
+  True -> Error("My value is too high")
+}
 ```
 
 ## Multi-arm Error Recovery
