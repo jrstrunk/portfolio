@@ -97,9 +97,9 @@ echo res
 
 Compared to `use-fn`, `use-case` for error handling is more friendly to both new and experienced Gleam developers because it:
 
-1. Is easier to learn and read (implementation details are not hidden within function bodies)
-2. Type errors can highlight only the invalid arm instead of the entire `use` statement (making them significantly more understandable)
-3. Encourages better error handling by always presenting the error cases to the user instead of hiding them away in a function body
+1. Encourages better error handling by always presenting the error cases to the user instead of hiding them away in a function body
+2. Is easier to learn and read (implementation details are not hidden within function bodies)
+3. Type errors can highlight only the invalid arm instead of the entire `use` statement (making them significantly more understandable)
 4. Does not require mixing with pipe operators and anonymous functions to achieve error transformation (which may be unfamiliar to new Gleam users)
 5. Is more flexible
 6. Is lazy by default
@@ -110,17 +110,8 @@ Compared to `use-fn`, `use-case` for error handling is more friendly to both new
 11. Does not depend on importing external functions
 12. Has a similar feel to Zig's error handling and is easier to rationalize about if already familiar with pattern matching in general
 
-Let's explore a couple of these points.
+Let's explore a couple of the most important points.
 
-## Ease of Learning
-
-`use-fn` is by far the most challenging concept to learn in Gleam. `use-case` retains the core benefits of `use-fn` for error handling, but is significantly easier to learn and use. Considering a world where both `use-case` and `use-fn` exist, `use-case` would be a valuable step to learn before learning `use-fn`. The learning path would be `case` -> patterns -> `use-case` -> `use-fn`, which is a much more gradual and natural path to follow. Currently, there is nothing to ease new users into `use-fn`.
-
-If `use-case` were widely used where `use-fn` is used today for error handling, it would lower Gleam's barrier to entry as a whole.
-
-## Ease of Debugging
-
-A large part of Gleam's famed friendliness is its very human-readable compiler errors. Unfortunately, type errors caused by `use-fn` can be very difficult to understand. Because `use-case` clearly retains the distinct arms of a case statement, the compiler errors can be much more precise in highlighting the part of the statement that the error comes from, making it easier to understand and fix.
 
 ## Cost of Good Error Handling
 
@@ -162,6 +153,16 @@ use Ok(char) <- case string.first(my_input) {
 Adding a clause to handle the error added no lines to the size of the original statement; the user is forced to acknowledge the error case either way. Handling the error here is low cost, and this leads users to handle their errors properly more often.
 
 The examples only get more extreme in favor of `use-case` as you try to handle an error with more complex logic. A low cost to handling errors is necessary for users to actually handle errors, which is of grave importance to giving users a feeling of ease when maintaining application code. Largely, I think the cost of handling errors vs ignoring them is directly proportional to the amount of fatigue users will feel for the language over time.
+
+## Ease of Learning
+
+`use-fn` is by far the most challenging concept to learn in Gleam. `use-case` retains the core benefits of `use-fn` for error handling, but is significantly easier to learn and use. Considering a world where both `use-case` and `use-fn` exist, `use-case` would be a valuable step to learn before learning `use-fn`. The learning path would be `case` -> patterns -> `use-case` -> `use-fn`, which is a much more gradual and natural path to follow. Currently, there is nothing to ease new users into `use-fn`.
+
+If `use-case` were widely used where `use-fn` is used today for error handling, it would lower Gleam's barrier to entry as a whole. A low barrier to entry is crucial for Gleam to achieve widespread adoption and succeed.
+
+## Ease of Debugging
+
+A large part of Gleam's famed friendliness is its very human-readable compiler errors. Unfortunately, type errors caused by `use-fn` can be very difficult to understand. Because `use-case` clearly retains the distinct arms of a case statement, the compiler errors can be much more precise in highlighting the part of the statement that the error comes from, making it easier to understand and fix.
 
 # Further "Use-Case" Examples
 
