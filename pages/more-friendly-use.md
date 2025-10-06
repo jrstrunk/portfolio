@@ -1,14 +1,12 @@
 # Making Gleam's Beloved "Use" Statement More Friendly
 
-I believe `use` combined with a `case` statement (*referred to as `use-case` from now on*) would be a better fit for the Gleam language than the current implementation of `use` combined with a function call (*referred to as `use-fn` from now on*). In this document I will explore why.
+I believe `use` combined with a `case` statement (*referred to as `use-case` from now on*) would be a better fit for Gleam than the current implementation of `use` combined with a function call (*referred to as `use-fn` from now on*). In this document, I will explore why.
 
-I have to start by saying that I adore Gleam. It is the language I want to write the most. I write this not as a shallow critique of Gleam, but in hope of starting productive conversations around something I value. I also think that the `use` keyword design is geniusly clever and elegant, so props to Louis and the Gleam community for the amazing work there.
+I adore Gleam. It is the language I want to write the most. I write this not as a shallow critique of Gleam, but in the hope of starting productive conversations around something I value. I also think that the `use` keyword design is geniusly clever and elegant, so props to Louis and the Gleam community for the fantastic work there.
 
-# The "Use" Status-Quo
+# The "Use" Status Quo
 
-I cannot speak with authority here as I am not a core team member, but it seems that Gleam has always chosen to favor features that are focused enough to solve few concrete problems well over features that are broad and powerful enough to solve many problems in a general way. Broad and powerful features tend to be complex, while focused and simple features tend to be more friendly. This seems to be why macros are not present in Gleam, and instead there are a handful of dedicated keywords and LSP actions to help where macros would traditionally be useful.
-
-While `use-fn` has potential for a wide range of use cases, it is overwhelmingly used for error handling within Gleam. That brings up the question: if the primary use for `use-fn` is error handling, then why is the feature not tuned more towards it? After all, features that are focused and simple are more friendly than features that are broad and powerful, right?
+While `use-fn` has potential for a wide range of use cases, it is overwhelmingly used for error handling within Gleam. That raises the question: if the primary use for `use-fn` is error handling, then why is the feature not more tuned towards it? After all, features that are focused and simple are more friendly than features that are broad and powerful, right?
 
 I believe this is where `use-case` could come in, as it is a less powerful version of `use-fn` that is better suited for error handling, while also providing valuable new ways to express bespoke `case` statements that are not feasible today.
 
@@ -64,7 +62,7 @@ echo val
 // continue lots of logic
 ```
 
-It has the same arms as the regular `case` statement above, but the `use` keyword allows us to move the block of the first arm to the current indentation level. This provides us with all the typical benefits of a `use-fn` statement, but in a more explicit and flexible manner. Not only is it less tokens than the `use-fn` example, but it is easier to follow too!
+It has the same arms as the regular `case` statement above, but the `use` keyword allows us to move the block of the first arm to the current indentation level. `use-case` provides us with all the typical benefits of a `use-fn` statement for error handling, but in a more explicit and flexible manner. Not only are there fewer tokens than in the `use-fn` example, but it is also easier to follow.
 
 This `use-case` syntax can be used in place of all calls to `result.try` within a `use-fn` statement. For a larger function call, this may look something like:
 
@@ -112,21 +110,21 @@ Compared to `use-fn`, `use-case` for error handling is more friendly to both new
 11. Does not depend on importing external functions
 12. Has a similar feel to Zig's error handling and is easier to rationalize about if already familiar with pattern matching in general
 
-Let's explore a couple of these points
+Let's explore a couple of these points.
 
 ## Ease of Learning
 
-`use-fn` is by far the most difficult concept to learn in Gleam. `use-case` retains the core benefit of `use-fn` for error handling, but is significantly easier to learn and use. Considering a world where both `use-case` and `use-fn` exist, `use-case` would be a valuable step to learn before learning `use-fn`. The learning path would be `case` -> patterns -> `use-case` -> `use-fn`. This is a much more gradual and natural path to follow, as currently there is nothing to ease new users into `use-fn`.
+`use-fn` is by far the most challenging concept to learn in Gleam. `use-case` retains the core benefits of `use-fn` for error handling, but is significantly easier to learn and use. Considering a world where both `use-case` and `use-fn` exist, `use-case` would be a valuable step to learn before learning `use-fn`. The learning path would be `case` -> patterns -> `use-case` -> `use-fn`, which is a much more gradual and natural path to follow. Currently, there is nothing to ease new users into `use-fn`.
 
 If `use-case` were widely used where `use-fn` is used today, it would lower Gleam's barrier to entry as a whole.
 
 ## Ease of Debugging
 
-A large part of Gleam's famed friendliness is its very useful compiler errors. Unfortunately, type errors caused by `use-fn` can be very difficult to understand. Because `use-case` clearly retains the distinct arms of a case statement, the compiler errors can be much more precise in highlighting the part of the statement that the error comes from, making it easier to understand and fix.
+A large part of Gleam's famed friendliness is its very human-readable compiler errors. Unfortunately, type errors caused by `use-fn` can be very difficult to understand. Because `use-case` clearly retains the distinct arms of a case statement, the compiler errors can be much more precise in highlighting the part of the statement that the error comes from, making it easier to understand and fix.
 
 ## Cost of Good Error Handling
 
-The biggest critique against Rust's `?` operator is that it makes ignoring errors too easy. Because ignoring errors is easy, the perceived cost of handling those errors is high, leading users to not properly handle errors at all. Though `use-fn` is a significant step in the right direction, I still believe it ultimately falls short in the same way `?` does: it is too easy to just write `use .. <- result.try(..)`, completely ignoring the error condition.
+The biggest critique against Rust's `?` operator is that it makes ignoring errors too easy. Because ignoring errors is easy, the perceived cost of handling those errors is high, leading users to not properly handle errors at all. Though `use-fn` is a significant step in the right direction, I still believe it ultimately falls short in the same way `?` does: it is too easy to write `use .. <- result.try(..)`, completely ignoring the error condition.
 
 Compare ignoring versus handling an error with `use-fn`:
 
@@ -143,9 +141,9 @@ use char <- result.try(
 )
 ```
 
-Adding a clause to handle the error added three lines to a previously one line statement! This is a high cost, and not one users will want to pay unless they really think the error has a high chance of occurring. This leads to many unhandled errors, which leads to a more frustrating debugging experience, which leads to fatigue with the language as a whole.
+Adding a clause to handle the error added three lines to a previously one-line statement! The drastic difference in line count is a high cost that users will not want to pay unless they really believe the error has a high likelihood of occurring. The result is numerous unhandled errors, leading to a more frustrating debugging experience, which in turn contributes to fatigue with the language as a whole.
 
-Now lets compare ignoring versus handling an error with `use-case`
+Now, let's compare ignoring versus handling an error with `use-case`
 
 ```gleam
 // Ignoring the error case
@@ -161,9 +159,9 @@ use Ok(char) <- case string.first(my_input) {
 }
 ```
 
-Adding a clause to handle the error added no lines to the size of the original statement, because either way the user is forced to acknowledge the error case. This is a low cost, and leads users to handle their errors properly more often.
+Adding a clause to handle the error added no lines to the size of the original statement; either way, the user is forced to acknowledge the error case. Handling the error here is low cost, and this leads users to handle their errors properly more often.
 
-The examples only get more extreme in favor of `use-case` as you try to handle an error with more complex logic. A low cost to handling errors is necessary for users to actually handle errors, which is of grave importance to giving users a feeling of ease when maintaining application code. In a large way, I think the cost of handling errors vs ignoring them is directly proportional to the amount of fatigue users will feel for the language over time.
+The examples only get more extreme in favor of `use-case` as you try to handle an error with more complex logic. A low cost to handling errors is necessary for users to actually handle errors, which is of grave importance to giving users a feeling of ease when maintaining application code. Largely, I think the cost of handling errors vs ignoring them is directly proportional to the amount of fatigue users will feel for the language over time.
 
 # Further "Use-Case" Examples
 
@@ -459,8 +457,10 @@ effect.from(fn(dispatch) {
 
 After going through the `use-case` thought experiment, `use-fn` feels like how macros used to when I first started using Gleamus: too powerful for their own good.
 
-So, what now? `use-fn` is already present in Gleam today, and `use-case` is not. The biggest downside to adding `use-case` at this point is that it would overlap with some of the current uses of `use-fn`. Though `use-fn` and `use-case` have many uses that do not overlap, they would be fighting each other for their biggest use case: error handling.
+I cannot speak with authority here as I am not a core team member, but it seems that Gleam has always chosen to favor features that are focused enough to solve a few concrete problems well over features that are broad and powerful enough to solve many problems in a general way. Broad and powerful features tend to be complex, while focused and simple features tend to be more friendly. The complexity of powerful features appears to be why macros are not present in Gleam; instead, there are a handful of dedicated keywords and LSP actions to help where macros would traditionally be useful.
+
+So, what now? `use-fn` is already present in Gleam today, and `use-case` is not. The biggest downside to adding `use-case` at this point is that it would overlap with some of the current uses of `use-fn`. Though `use-fn` and `use-case` have many uses that do not overlap, they would be fighting each other for their most significant use case: error handling.
 
 I think the only way we could add `use-case` now without creating chaos would be to introduce it along with two other changes: 1. A compiler warning when `use-fn` is used with the `result` module functions, and 2. An addition to the `gleam fix` command or an LSP command that would automatically convert any usage of `use-fn` with the `result` module functions to `use-case`.
 
-It is up to the community to decide whether the `use-case` value proposition is worth adding it to Gleam at this point or not. I think the short term effort could be worth the long term benefits, but surely I didn't think of all the nuances of this proposal. I would love to hear feedback from the community.
+It is up to the community to decide whether the `use-case` value proposition is worth adding to Gleam at this point. I think the short-term effort could be worth the long-term benefits, but I surely didn't consider all the nuances of this proposal. I would love to hear feedback from the community.
