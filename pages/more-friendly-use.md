@@ -167,21 +167,6 @@ The examples only get more extreme in favor of `use-case` as you try to handle a
 
 Please read through all the examples; they build and become more compelling as you progress through them!
 
-## Result Handling - Replacing the Error
-`use-fn` example:
-```gleam
-import gleam/result
-
-use val <- result.try(
-  my_result_func(input_val) |> result.replace_error(Nil),
-)
-```
-
-`use-case` example:
-```gleam
-use Ok(val) <- case my_result_func(input_val) { _ -> Error(Nil) }
-```
-
 ## Result Handling - Mapping the Error
 `use-fn` example:
 ```gleam
