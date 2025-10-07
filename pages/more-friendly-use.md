@@ -439,6 +439,161 @@ effect.from(fn(dispatch) {
 })
 ```
 
+## Real Life Examples
+
+Here is an example of a real function from the `wisp` framework written with `use-fn`:
+
+```gleam
+pub fn method_override(request: HttpRequest(a)) -> HttpRequest(a) {
+  use <- bool.guard(when: request.method != http.Post, return: request)
+  {
+    use query <- result.try(request.get_query(request))
+    use value <- result.try(list.key_find(query, "_method"))
+    use method <- result.map(http.parse_method(value))
+
+    case method {
+      http.Put | http.Patch | http.Delete -> request.set_method(request, method)
+      _ -> request
+    }
+  }
+  |> result.unwrap(request)
+}
+```
+
+Here is the same function written with `use-case`:
+
+```gleam
+pub fn method_override(request: HttpRequest(a)) -> HttpRequest(a) {
+  use True <- case request.method == http.Post {
+    False -> request
+  }
+
+  use Ok(query) <- case request.get_query(request) {
+    Error(Nil) -> request
+  }
+  use Ok(value) <- case list.key_find(query, "_method") {
+    Error(Nil) -> request
+  }
+  use Ok(method) <- case http.parse_method(value) {
+    Error(Nil) -> request
+  }
+
+  use http.Put | http.Patch | http.Delete <- case method {
+    _ -> request
+  }
+  request.set_method(request, method)
+}
+```
+
+One is more verbose than the other, but which is easier to understand to maintain? If I were coming from JS, I could probably rationalize about the `use-case` example, but I'd probably miss some details about the `use-fn` example.
+
+Here is another example, `use-fn`:
+```gleam
+fn read_body_loop(
+  reader: internal.Reader,
+  read_chunk_size: Int,
+  max_body_size: Int,
+  accumulator: BitArray,
+) -> Result(BitArray, Nil) {
+  use chunk <- result.try(reader(read_chunk_size))
+  case chunk {
+    internal.ReadingFinished -> Ok(accumulator)
+    internal.Chunk(chunk, next) -> {
+      let accumulator = bit_array.append(accumulator, chunk)
+      case bit_array.byte_size(accumulator) > max_body_size {
+        True -> Error(Nil)
+        False ->
+          read_body_loop(next, read_chunk_size, max_body_size, accumulator)
+      }
+    }
+  }
+}
+```
+
+`use-case`:
+```gleam
+fn read_body_loop(
+  reader: internal.Reader,
+  read_chunk_size: Int,
+  max_body_size: Int,
+  accumulator: BitArray,
+) -> Result(BitArray, Nil) {
+  use Ok(chunk) <- case reader(read_chunk_size) {
+    Error(Nil) -> Error(Nil)
+  }
+  use internal.Chunk(chunk, next) <- case chunk {
+    internal.ReadingFinished -> Ok(accumulator)
+  }
+  let accumulator = bit_array.append(accumulator, chunk)
+  use False <- case bit_array.byte_size(accumulator) > max_body_size {
+    True -> Error(Nil)
+  }
+  read_body_loop(next, read_chunk_size, max_body_size, accumulator)
+}
+```
+
+Another, `use-fn`:
+```gleam
+pub fn date_from_tuple(
+  date: #(Int, Int, Int),
+) -> Result(Date, tempo_error.DateOutOfBoundsError) {
+  let #(year, month, day) = date
+
+  use month <- result.try(
+    month_from_int(month)
+    |> result.replace_error(
+      tempo_error.DateMonthOutOfBounds(int.to_string(month)),
+    ),
+  )
+
+  case year >= 1000 && year <= 9999 {
+    True ->
+      case day >= 1 && day <= month_days_of(month, in: year) {
+        True -> Ok(date_from_calendar_date(CalendarDate(year:, month:, day:)))
+        False ->
+          Error(tempo_error.DateDayOutOfBounds(
+            month_to_short_string(month) <> " " <> int.to_string(day),
+          ))
+      }
+    False -> Error(tempo_error.DateYearOutOfBounds(int.to_string(year)))
+  }
+}
+```
+
+`use-case`:
+```gleam
+pub fn date_from_tuple(
+  date: #(Int, Int, Int),
+) -> Result(Date, tempo_error.DateOutOfBoundsError) {
+  let #(year, month, day) = date
+
+  use Ok(month) <- case month_from_int(month) {
+    Error(Nil) -> Error(tempo_error.DateMonthOutOfBounds(int.to_string(month)))
+  }
+
+  use True <- case year >= 1000 && year <= 9999 {
+    False -> Error(tempo_error.DateYearOutOfBounds(int.to_string(year)))
+  }
+
+  use True <- case day >= 1 && day <= month_days_of(month, in: year) {
+    False ->
+      Error(tempo_error.DateDayOutOfBounds(
+        month_to_short_string(month) <> " " <> int.to_string(day),
+      ))
+  }
+
+  Ok(date_from_calendar_date(CalendarDate(year:, month:, day:)))
+}
+```
+
+## On Verbosity
+
+When doing anything with the error case, `use-case` is more concise than `use-fn`. When not doing anything with the error case, we may be tempted to write `use-case` like the following to save lines:
+```gleam
+use Ok(val) <- case my_result_func(input) { e -> e }
+```
+This would require the Gleam compiler to implicitly convert the `e` value on the second arm, but could be possible. Though this keeps everything on the same line, it also undermines the whole point of this proposal. If the above syntax was allowed, users would be very tempted to throw `e -> e` everywhere to make it all fit on one line, which would make it hardly better than `use-fn` today.
+
 ## What Now?
 
 After going through the `use-case` thought experiment, looking at `use .. <- result.try(..)` again makes me question: where did the error go? It feels a little too much like behind the scenes magic. It feels like how Rust's `?` felt when I first started using Gleam: too powerful for its own good.
