@@ -147,9 +147,13 @@ use Ok(char) <- case string.first(my_input) {
 }
 ```
 
-Adding a clause to handle the error added no lines to the size of the original statement; the user is forced to acknowledge the error case either way. Handling the error here is low cost, and this leads users to handle their errors properly more often.
+Adding a clause to handle the error added no lines to the size of the original statement; the user is forced to acknowledge the error case either way. Handling the error here is low cost, and this leads the user to handle their errors properly more often.
 
 The examples only get more extreme in favor of `use-case` as you try to handle an error with more complex logic. A low cost to handling errors is necessary for users to actually handle errors, which is of grave importance to giving users a feeling of ease when maintaining application code. Largely, I think the cost of handling errors vs ignoring them is directly proportional to the amount of fatigue users will feel for the language over time.
+
+#### Under "Use-Fn", "Error(Nil)" Is Supreme
+
+When the cost of handling errors is high, errors are more likely to homogenize into the same type to avoid the high cost of converting between them. This leads to the lowest common denominator error type being used, and `Result(.., Nil)` ends up being the return type for everything. Where did the useful errors go?
 
 ### Ease of Learning
 
